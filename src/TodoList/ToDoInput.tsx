@@ -11,7 +11,6 @@ import { useField } from "react-final-form";
 import { isNullOrWhitespace } from "../Common/helpers";
 
 const ToDoInput = (props: any) => {
-    console.log(props);
     const initialize = props.form.initialize;
 
     const onCancel = useCallback(

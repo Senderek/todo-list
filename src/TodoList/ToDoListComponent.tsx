@@ -14,9 +14,10 @@ import TodoItem, { todoItemeEquals } from "../Interfaces/TodoItem";
 import moment from "moment";
 import TickIcon from "@material-ui/icons/Check";
 import { v4 as uuidv4 } from "uuid";
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import EditIcon from "@material-ui/icons/Edit";
 import { isNullOrWhitespace } from "../Common/helpers";
+import axios from "axios";
 
 const intialForm = {};
 const initialItems: TodoItem[] = [];
@@ -25,6 +26,7 @@ const TodoList = (props: any) => {
     const [listItems, setStateItems] = useState(initialItems);
     const [init, setInit] = useState(intialForm);
     let location = useLocation();
+    const { id } = useParams();
 
     const escFunction = useCallback(
         (event: KeyboardEvent) => {
@@ -36,28 +38,20 @@ const TodoList = (props: any) => {
     );
 
     useEffect(() => {
-        const localStorageValues = localStorage.getItem("myToDoList");
-        if (localStorageValues != null && !isNullOrWhitespace(localStorageValues)) {
-            const parsedLocalStorageValues: TodoItem[] = JSON.parse(localStorageValues);
-            if (parsedLocalStorageValues != null) {
-                setStateItems(
-                    parsedLocalStorageValues.map((x: TodoItem) => ({
-                        ...x,
-                        addedOnDate: moment(x.addedOnDate),
-                        completionDate: x.completionDate != null ? moment(x.completionDate) : null
-                    }))
-                );
-            }
-        }
+        axios.get(`https://localhost:3005/todolist/${id}`).then(x => {
+            const newState: TodoItem[] = x.data;
+            setStateItems(newState);
+        });
         document.addEventListener("keydown", escFunction, false);
         return () => {
             document.removeEventListener("keydown", escFunction, false);
         };
-    }, [location, escFunction]);
+    }, [location, escFunction, id]);
 
     const onChange = (value: TodoItem[]) => {
-        localStorage.setItem("myToDoList", JSON.stringify(value));
-        setStateItems(value);
+        axios.post(`https://localhost:3005/todolist/${id}`, value).then(() => {
+            setStateItems(value);
+        });
     };
 
     const onSubmitNew = (values: any, form: any) => {
@@ -97,7 +91,6 @@ const TodoList = (props: any) => {
         if (item != null) {
             setInit({ id: item.id, mainInput: item.text });
             const elementToFocus = document.getElementById("inputToFocus");
-            console.log(elementToFocus);
             elementToFocus?.focus();
         }
     };
